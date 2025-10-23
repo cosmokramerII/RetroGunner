@@ -1,39 +1,17 @@
 import { useRef, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useKeyboardControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useGameStore } from "../lib/stores/useGameStore";
-import { GAME_CONSTANTS } from "../lib/gameConstants";
 
-interface PlayerProps {
-  playerData: any;
-}
-
-const Player = ({ playerData }: PlayerProps) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const { shootBullet, updatePlayerInput } = useGameStore();
+const Player = () => {
+  const meshRef = useRef<THREE.Group>(null);
+  const { playerData, isGameOver, updatePlayerPosition } = useGameStore();
   
-  const [subscribeKeys, getKeys] = useKeyboardControls();
-
-  // Handle keyboard input
-  useFrame(() => {
-    const keys = getKeys();
-    
-    const input = {
-      left: keys.left,
-      right: keys.right,
-      up: keys.up,
-      down: keys.down,
-      jump: keys.jump,
-      shoot: keys.shoot,
-      weapon1: keys.weapon1,
-      weapon2: keys.weapon2,
-      weapon3: keys.weapon3
-    };
-
-    updatePlayerInput(input);
-
-    // Update mesh position
+  // Animation state
+  const animFrame = useRef(0);
+  const animTimer = useRef(0);
+  
+  useFrame((state, delta) => {
     if (meshRef.current) {
       meshRef.current.position.set(
         playerData.position.x,
@@ -41,136 +19,211 @@ const Player = ({ playerData }: PlayerProps) => {
         0
       );
       
-      // Flip sprite based on direction
-      meshRef.current.scale.x = playerData.facingRight ? 1 : -1;
+      // Run animation
+      if (Math.abs(playerData.velocity.x) > 0.1) {
+        animTimer.current += delta;
+        if (animTimer.current > 0.08) {
+          animTimer.current = 0;
+          animFrame.current = (animFrame.current + 1) % 6;
+        }
+      } else {
+        animFrame.current = 0;
+      }
     }
   });
 
-  // SNES-style detailed player sprite
+  const isRunning = Math.abs(playerData.velocity.x) > 0.1;
+  const legOffset = isRunning ? Math.sin(animFrame.current * 0.8) * 0.1 : 0;
+  const armSwing = isRunning ? Math.sin(animFrame.current * 0.8) * 0.05 : 0;
+
   return (
     <group ref={meshRef}>
-      {/* Body - main torso with detailed shading */}
-      <mesh position={[0, 0, 0.01]}>
-        <planeGeometry args={[0.6, 0.8]} />
-        <meshBasicMaterial color="#d94040" />
-      </mesh>
-      
-      {/* Body shadow/detail */}
-      <mesh position={[-0.05, -0.1, 0.02]}>
-        <planeGeometry args={[0.5, 0.6]} />
-        <meshBasicMaterial color="#a02828" />
-      </mesh>
-      
-      {/* Chest detail - bandolier */}
-      <mesh position={[0.1, 0.2, 0.03]}>
-        <planeGeometry args={[0.5, 0.15]} />
-        <meshBasicMaterial color="#8b6914" />
-      </mesh>
-      
-      {/* Head */}
-      <mesh position={[0, 0.5, 0.01]}>
-        <planeGeometry args={[0.45, 0.45]} />
-        <meshBasicMaterial color="#ffb380" />
-      </mesh>
-      
-      {/* Headband - Rambo style */}
-      <mesh position={[0, 0.65, 0.02]}>
-        <planeGeometry args={[0.5, 0.12]} />
-        <meshBasicMaterial color="#2a52be" />
-      </mesh>
-      
-      {/* Eyes */}
-      <mesh position={[playerData.facingRight ? 0.1 : -0.1, 0.52, 0.03]}>
-        <planeGeometry args={[0.08, 0.08]} />
-        <meshBasicMaterial color="#2a1810" />
-      </mesh>
-      
-      {/* Gun - detailed weapon */}
-      <mesh position={[playerData.facingRight ? 0.35 : -0.35, 0.15, 0.03]}>
-        <planeGeometry args={[0.45, 0.12]} />
-        <meshBasicMaterial color="#4a4a4a" />
-      </mesh>
-      
-      {/* Gun barrel */}
-      <mesh position={[playerData.facingRight ? 0.55 : -0.55, 0.15, 0.04]}>
-        <planeGeometry args={[0.2, 0.08]} />
-        <meshBasicMaterial color="#2a2a2a" />
-      </mesh>
-      
-      {/* Legs */}
-      <mesh position={[-0.12, -0.5, 0.01]}>
-        <planeGeometry args={[0.22, 0.5]} />
-        <meshBasicMaterial color="#3a5a8a" />
-      </mesh>
-      <mesh position={[0.12, -0.5, 0.01]}>
-        <planeGeometry args={[0.22, 0.5]} />
-        <meshBasicMaterial color="#3a5a8a" />
-      </mesh>
-      
-      {/* Boots */}
-      <mesh position={[-0.12, -0.7, 0.02]}>
-        <planeGeometry args={[0.25, 0.15]} />
-        <meshBasicMaterial color="#1a1a1a" />
-      </mesh>
-      <mesh position={[0.12, -0.7, 0.02]}>
-        <planeGeometry args={[0.25, 0.15]} />
-        <meshBasicMaterial color="#1a1a1a" />
-      </mesh>
-      
-      {/* Arms */}
-      <mesh position={[playerData.facingRight ? 0.25 : -0.25, 0.1, 0.00]}>
-        <planeGeometry args={[0.18, 0.5]} />
-        <meshBasicMaterial color="#ffb380" />
-      </mesh>
-      
-      {/* Weapon highlight based on current weapon */}
-      {playerData.currentWeapon !== 'basic' && (
-        <mesh position={[playerData.facingRight ? 0.5 : -0.5, 0.15, 0.05]}>
-          <planeGeometry args={[0.15, 0.15]} />
-          <meshBasicMaterial 
-            color={
-              playerData.currentWeapon === 'machine_gun' ? '#ffff00' :
-              playerData.currentWeapon === 'spread_gun' ? '#ff6600' :
-              '#ff00ff'
-            }
-            transparent
-            opacity={0.6}
-          />
+      {/* Modern detailed sprite */}
+      <group scale={[playerData.facingRight ? 1.2 : -1.2, 1.2, 1]}>
+        
+        {/* Shadow */}
+        <mesh position={[0, -0.55, -0.01]}>
+          <planeGeometry args={[0.6, 0.1]} />
+          <meshBasicMaterial color="#000000" transparent opacity={0.3} />
         </mesh>
+        
+        {/* Body */}
+        <group>
+          {/* Torso - military vest */}
+          <mesh position={[0, 0.1, 0]}>
+            <planeGeometry args={[0.35, 0.4]} />
+            <meshBasicMaterial color="#3a4a3a" />
+          </mesh>
+          
+          {/* Vest details */}
+          <mesh position={[0, 0.15, 0.01]}>
+            <planeGeometry args={[0.32, 0.25]} />
+            <meshBasicMaterial color="#2a3a2a" />
+          </mesh>
+          
+          {/* Belt and pouches */}
+          <mesh position={[0, -0.05, 0.01]}>
+            <planeGeometry args={[0.35, 0.08]} />
+            <meshBasicMaterial color="#4a3a2a" />
+          </mesh>
+          
+          {/* Head */}
+          <mesh position={[0, 0.38, 0]}>
+            <planeGeometry args={[0.2, 0.22]} />
+            <meshBasicMaterial color="#d4a373" />
+          </mesh>
+          
+          {/* Hair */}
+          <mesh position={[0, 0.46, 0.01]}>
+            <planeGeometry args={[0.22, 0.12]} />
+            <meshBasicMaterial color="#2a2a2a" />
+          </mesh>
+          
+          {/* Bandana */}
+          <mesh position={[0, 0.43, 0.02]}>
+            <planeGeometry args={[0.25, 0.06]} />
+            <meshBasicMaterial color="#cc2222" />
+          </mesh>
+          
+          {/* Arms */}
+          {/* Gun arm */}
+          <group rotation={[0, 0, playerData.isShooting ? -0.05 : 0]}>
+            <mesh position={[0.22, 0.1 + armSwing * 0.5, 0]}>
+              <planeGeometry args={[0.4, 0.12]} />
+              <meshBasicMaterial color="#d4a373" />
+            </mesh>
+            
+            {/* Weapon */}
+            <group position={[0.45, 0.1, 0.01]}>
+              {/* Assault rifle body */}
+              <mesh position={[0, 0, 0]}>
+                <planeGeometry args={[0.35, 0.1]} />
+                <meshBasicMaterial color="#1a1a1a" />
+              </mesh>
+              
+              {/* Barrel */}
+              <mesh position={[0.2, 0, 0.01]}>
+                <planeGeometry args={[0.2, 0.06]} />
+                <meshBasicMaterial color="#2a2a2a" />
+              </mesh>
+              
+              {/* Magazine */}
+              <mesh position={[-0.05, -0.05, 0]}>
+                <planeGeometry args={[0.04, 0.08]} />
+                <meshBasicMaterial color="#1a1a1a" />
+              </mesh>
+              
+              {/* Muzzle flash */}
+              {playerData.isShooting && (
+                <>
+                  <mesh position={[0.35, 0, 0.02]}>
+                    <planeGeometry args={[0.25, 0.25]} />
+                    <meshBasicMaterial color="#ffff88" transparent opacity={0.9} />
+                  </mesh>
+                  <mesh position={[0.4, 0, 0.025]}>
+                    <planeGeometry args={[0.15, 0.15]} />
+                    <meshBasicMaterial color="#ffffff" transparent opacity={0.8} />
+                  </mesh>
+                </>
+              )}
+            </group>
+          </group>
+          
+          {/* Support arm */}
+          <mesh position={[-0.15, 0.05 - armSwing * 0.5, 0]}>
+            <planeGeometry args={[0.12, 0.35]} />
+            <meshBasicMaterial color="#d4a373" />
+          </mesh>
+          
+          {/* Legs */}
+          {/* Right leg */}
+          <group>
+            <mesh position={[0.08, -0.25 - Math.abs(legOffset), 0]}>
+              <planeGeometry args={[0.14, 0.3]} />
+              <meshBasicMaterial color="#4a5a4a" />
+            </mesh>
+            {/* Boot */}
+            <mesh position={[0.08, -0.45 - Math.abs(legOffset), 0.01]}>
+              <planeGeometry args={[0.15, 0.12]} />
+              <meshBasicMaterial color="#2a2a2a" />
+            </mesh>
+          </group>
+          
+          {/* Left leg */}
+          <group>
+            <mesh position={[-0.08, -0.25 + Math.abs(legOffset), 0]}>
+              <planeGeometry args={[0.14, 0.3]} />
+              <meshBasicMaterial color="#4a5a4a" />
+            </mesh>
+            {/* Boot */}
+            <mesh position={[-0.08, -0.45 + Math.abs(legOffset), 0.01]}>
+              <planeGeometry args={[0.15, 0.12]} />
+              <meshBasicMaterial color="#2a2a2a" />
+            </mesh>
+          </group>
+        </group>
+      </group>
+      
+      {/* Power-up indicator */}
+      {playerData.currentWeapon !== 'basic' && (
+        <group position={[0, 0.9, 0.1]}>
+          {/* Weapon icon background */}
+          <mesh position={[0, 0, 0]}>
+            <planeGeometry args={[0.4, 0.15]} />
+            <meshBasicMaterial color="#000000" transparent opacity={0.7} />
+          </mesh>
+          
+          {/* Weapon text */}
+          <mesh position={[0, 0, 0.01]}>
+            <planeGeometry args={[0.35, 0.1]} />
+            <meshBasicMaterial 
+              color={
+                playerData.currentWeapon === 'machine_gun' ? '#ffff00' :
+                playerData.currentWeapon === 'spread_gun' ? '#ff4400' :
+                '#ff00ff'
+              }
+            />
+          </mesh>
+        </group>
       )}
       
-      {/* Shield effect when active */}
+      {/* Shield effect */}
       {playerData.hasShield && (
         <>
-          {/* Shield outer glow */}
-          <mesh position={[0, 0, 0.06]}>
-            <planeGeometry args={[1.6, 1.8]} />
+          {/* Energy shield bubble */}
+          <mesh position={[0, 0, 0.05]}>
+            <circleGeometry args={[1.0, 32]} />
             <meshBasicMaterial 
-              color="#4488ff"
+              color="#00aaff"
               transparent
-              opacity={0.15}
+              opacity={0.2}
+              side={THREE.DoubleSide}
             />
           </mesh>
           
           {/* Shield hexagon pattern */}
-          <mesh position={[0, 0, 0.07]}>
-            <planeGeometry args={[1.4, 1.6]} />
-            <meshBasicMaterial 
-              color="#88bbff"
-              transparent
-              opacity={0.25}
-            />
-          </mesh>
-          
-          {/* Shield inner core */}
-          <mesh position={[0, 0, 0.08]}>
-            <planeGeometry args={[1.2, 1.4]} />
-            <meshBasicMaterial 
-              color="#aaddff"
-              transparent
-              opacity={0.2}
-            />
-          </mesh>
+          {Array.from({ length: 8 }).map((_, i) => {
+            const angle = (i / 8) * Math.PI * 2;
+            const radius = 0.9;
+            return (
+              <mesh 
+                key={i} 
+                position={[
+                  Math.cos(angle) * radius, 
+                  Math.sin(angle) * radius, 
+                  0.06
+                ]}
+                rotation={[0, 0, angle]}
+              >
+                <planeGeometry args={[0.2, 0.05]} />
+                <meshBasicMaterial 
+                  color="#44ccff"
+                  transparent
+                  opacity={0.4}
+                />
+              </mesh>
+            );
+          })}
         </>
       )}
     </group>
