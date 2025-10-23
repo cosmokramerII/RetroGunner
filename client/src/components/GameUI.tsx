@@ -23,27 +23,67 @@ const GameUI = () => {
         zIndex: 100
       }} />
       
-      {/* HUD - 16-bit Style */}
+      {/* HUD - Modern Contra Style */}
       {gameState === 'playing' && player && (
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-          {/* Left HUD Panel */}
+          {/* Player 1 Panel with Portrait */}
           <div className="relative" style={{
-            background: 'linear-gradient(135deg, #1a1a3e 0%, #0a0a1e 100%)',
-            border: '4px solid #4a4aaa',
-            boxShadow: 'inset 0 2px 0 #6a6aff, inset 0 -2px 0 #2a2a5a, 0 4px 8px rgba(0,0,0,0.5)',
-            imageRendering: 'pixelated'
+            background: 'linear-gradient(135deg, rgba(20,40,20,0.95) 0%, rgba(10,20,10,0.98) 100%)',
+            border: '3px solid #4aaa4a',
+            boxShadow: 'inset 0 2px 0 #6aff6a, inset 0 -2px 0 #2a5a2a, 0 4px 8px rgba(0,0,0,0.7)',
+            borderRadius: '4px'
           }}>
-            <div className="p-3 space-y-2" style={{ minWidth: '180px' }}>
-              {/* Player indicator */}
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-3 h-3 bg-red-500" style={{ boxShadow: '0 0 8px #ff0000' }} />
-                <span className="text-white font-bold text-sm tracking-wider" style={{
-                  textShadow: '2px 2px 0px #000000, -1px -1px 0px #ffffff'
-                }}>1P</span>
+            <div className="flex items-start gap-3 p-3">
+              {/* Character Portrait */}
+              <div className="relative" style={{
+                width: '60px',
+                height: '60px',
+                background: 'linear-gradient(135deg, #2a3a4a 0%, #1a2a3a 100%)',
+                border: '2px solid #5a6a7a',
+                borderRadius: '4px',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)'
+              }}>
+                {/* Portrait image placeholder - Bill Rizer style */}
+                <div className="absolute inset-1 rounded" style={{
+                  background: 'linear-gradient(135deg, #8a6a4a 0%, #6a4a2a 100%)'
+                }}>
+                  {/* Face */}
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full" style={{
+                    background: '#d4a373'
+                  }} />
+                  {/* Hair */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-4 rounded-t-full" style={{
+                    background: '#2a2a2a'
+                  }} />
+                  {/* Bandana */}
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 w-9 h-2" style={{
+                    background: '#cc2222'
+                  }} />
+                  {/* Body */}
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-6" style={{
+                    background: '#3a4a3a'
+                  }} />
+                </div>
+                
+                {/* P1 Label */}
+                <div className="absolute -bottom-1 -right-1 bg-green-500 text-white text-xs font-bold px-1 rounded" style={{
+                  boxShadow: '0 0 4px rgba(0,255,0,0.5)'
+                }}>
+                  P1
+                </div>
               </div>
               
-              {/* Health */}
-              <div>
+              {/* Stats */}
+              <div className="flex-1 space-y-2">
+                {/* Name */}
+                <div className="text-green-300 font-bold text-sm tracking-wider" style={{
+                  textShadow: '1px 1px 0px #0a3a0a'
+                }}>
+                  BILL RIZER
+                </div>
+                
+                {/* Health */}
+                <div>
                 <div className="text-yellow-300 font-bold text-xs mb-1 tracking-wider" style={{
                   textShadow: '1px 1px 0px #8b6914'
                 }}>LIFE</div>
@@ -89,6 +129,7 @@ const GameUI = () => {
                   }}>SHIELD</span>
                 </div>
               )}
+              </div>
             </div>
           </div>
 
