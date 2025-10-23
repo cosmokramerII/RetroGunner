@@ -7,27 +7,15 @@ interface BulletProps {
 }
 
 const Bullet = ({ bulletData }: BulletProps) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const glowRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.position.set(
+    if (groupRef.current) {
+      groupRef.current.position.set(
         bulletData.position.x,
         bulletData.position.y,
         0.1
       );
-    }
-    
-    // Animated glow effect
-    if (glowRef.current) {
-      glowRef.current.position.set(
-        bulletData.position.x,
-        bulletData.position.y,
-        0.09
-      );
-      const pulse = Math.sin(state.clock.elapsedTime * 10) * 0.3 + 0.7;
-      glowRef.current.scale.setScalar(pulse);
     }
   });
 
@@ -60,9 +48,9 @@ const Bullet = ({ bulletData }: BulletProps) => {
   const [width, height] = getBulletSize();
 
   return (
-    <group>
+    <group ref={groupRef}>
       {/* Glow effect */}
-      <mesh ref={glowRef}>
+      <mesh position={[0, 0, -0.02]}>
         <planeGeometry args={[width * 1.5, height * 1.5]} />
         <meshBasicMaterial 
           color={getGlowColor()} 
@@ -72,7 +60,7 @@ const Bullet = ({ bulletData }: BulletProps) => {
       </mesh>
       
       {/* Main bullet */}
-      <mesh ref={meshRef}>
+      <mesh position={[0, 0, 0]}>
         <planeGeometry args={[width, height]} />
         <meshBasicMaterial 
           color={getBulletColor()} 
@@ -82,7 +70,7 @@ const Bullet = ({ bulletData }: BulletProps) => {
       </mesh>
       
       {/* Bullet core/highlight */}
-      <mesh ref={meshRef}>
+      <mesh position={[0, 0, 0.01]}>
         <planeGeometry args={[width * 0.5, height * 0.5]} />
         <meshBasicMaterial 
           color="#ffffff" 

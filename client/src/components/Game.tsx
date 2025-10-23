@@ -6,6 +6,7 @@ import Player from "./Player";
 import Level from "./Level";
 import Enemy from "./Enemy";
 import Bullet from "./Bullet";
+import PowerUp from "./PowerUp";
 import { useGameStore } from "../lib/stores/useGameStore";
 
 const Game = () => {
@@ -14,13 +15,16 @@ const Game = () => {
     player,
     enemies,
     bullets,
+    powerUps,
     level,
     gameState,
     updatePlayer,
     updateEnemies,
     updateBullets,
+    updatePowerUps,
     checkCollisions,
     spawnEnemies,
+    spawnPowerUp,
     initializeGame
   } = useGameStore();
 
@@ -36,8 +40,10 @@ const Game = () => {
       updatePlayer(delta);
       updateEnemies(delta);
       updateBullets(delta);
+      updatePowerUps(delta);
       checkCollisions();
       spawnEnemies();
+      spawnPowerUp();
 
       // Update camera to follow player
       if (cameraRef.current && player) {
@@ -81,6 +87,11 @@ const Game = () => {
       {/* Bullets */}
       {bullets.map(bullet => (
         <Bullet key={bullet.id} bulletData={bullet} />
+      ))}
+
+      {/* Power-ups */}
+      {powerUps.map(powerUp => (
+        <PowerUp key={powerUp.id} powerUpData={powerUp} />
       ))}
     </>
   );

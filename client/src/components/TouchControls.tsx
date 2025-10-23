@@ -36,112 +36,191 @@ const TouchControls = () => {
     updatePlayerInput(input);
   }, [updatePlayerInput]);
 
+  const buttonStyle = "transition-all active:scale-90";
+  
+  const dPadButtonStyle = {
+    background: 'linear-gradient(135deg, #2a2a5a 0%, #1a1a3a 100%)',
+    border: '3px solid #4a4aaa',
+    boxShadow: 'inset 0 2px 0 #6a6aff, inset 0 -2px 0 #0a0a2a, 0 4px 8px rgba(0,0,0,0.6)',
+    backdropFilter: 'blur(4px)'
+  };
+
   return (
     <div className="absolute inset-0 pointer-events-none z-20">
       {/* D-Pad */}
       <div className="absolute bottom-24 left-8 pointer-events-auto">
-        <div className="relative w-36 h-36">
-          {/* Center circle */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-gradient-to-br from-gray-700/40 to-gray-900/40 rounded-full border-2 border-white/30"></div>
+        <div className="relative w-40 h-40">
+          {/* Center diamond */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full" style={{
+            background: 'radial-gradient(circle, #3a3a6a 0%, #1a1a3a 100%)',
+            border: '3px solid #4a4aaa',
+            boxShadow: 'inset 0 2px 0 #5a5a8a, 0 4px 8px rgba(0,0,0,0.6)'
+          }} />
           
           {/* Up */}
           <button
-            className="absolute top-0 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gradient-to-b from-blue-500/20 to-blue-700/20 border-2 border-blue-300/40 rounded-lg backdrop-blur-sm transition-all active:scale-95 active:bg-blue-400/30"
+            className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-14 h-14 rounded-lg ${buttonStyle}`}
             onTouchStart={() => handleTouchStart('up')}
             onTouchEnd={handleTouchEnd}
-            style={{ touchAction: 'manipulation' }}
+            style={{
+              ...dPadButtonStyle,
+              touchAction: 'manipulation'
+            }}
           >
-            <span className="text-white text-xl font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">▲</span>
+            <span className="text-white text-2xl font-bold" style={{
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 0 8px #4488ff'
+            }}>▲</span>
           </button>
           
           {/* Down */}
           <button
-            className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gradient-to-b from-blue-500/20 to-blue-700/20 border-2 border-blue-300/40 rounded-lg backdrop-blur-sm transition-all active:scale-95 active:bg-blue-400/30"
+            className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-14 rounded-lg ${buttonStyle}`}
             onTouchStart={() => handleTouchStart('down')}
             onTouchEnd={handleTouchEnd}
-            style={{ touchAction: 'manipulation' }}
+            style={{
+              ...dPadButtonStyle,
+              touchAction: 'manipulation'
+            }}
           >
-            <span className="text-white text-xl font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">▼</span>
+            <span className="text-white text-2xl font-bold" style={{
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 0 8px #4488ff'
+            }}>▼</span>
           </button>
           
           {/* Left */}
           <button
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-gradient-to-b from-blue-500/20 to-blue-700/20 border-2 border-blue-300/40 rounded-lg backdrop-blur-sm transition-all active:scale-95 active:bg-blue-400/30"
+            className={`absolute left-0 top-1/2 transform -translate-y-1/2 w-14 h-14 rounded-lg ${buttonStyle}`}
             onTouchStart={() => handleTouchStart('left')}
             onTouchEnd={handleTouchEnd}
-            style={{ touchAction: 'manipulation' }}
+            style={{
+              ...dPadButtonStyle,
+              touchAction: 'manipulation'
+            }}
           >
-            <span className="text-white text-xl font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">◀</span>
+            <span className="text-white text-2xl font-bold" style={{
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 0 8px #4488ff'
+            }}>◀</span>
           </button>
           
           {/* Right */}
           <button
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-gradient-to-b from-blue-500/20 to-blue-700/20 border-2 border-blue-300/40 rounded-lg backdrop-blur-sm transition-all active:scale-95 active:bg-blue-400/30"
+            className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-14 h-14 rounded-lg ${buttonStyle}`}
             onTouchStart={() => handleTouchStart('right')}
             onTouchEnd={handleTouchEnd}
-            style={{ touchAction: 'manipulation' }}
+            style={{
+              ...dPadButtonStyle,
+              touchAction: 'manipulation'
+            }}
           >
-            <span className="text-white text-xl font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">▶</span>
+            <span className="text-white text-2xl font-bold" style={{
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 0 8px #4488ff'
+            }}>▶</span>
           </button>
         </div>
       </div>
 
       {/* Action Buttons - SNES style */}
       <div className="absolute bottom-24 right-8 pointer-events-auto">
-        <div className="relative w-40 h-32">
+        <div className="relative w-44 h-36">
           {/* Jump Button (Y button position) */}
           <button
-            className="absolute top-0 left-8 w-16 h-16 bg-gradient-to-br from-green-400/25 to-green-600/25 border-3 border-green-300/50 rounded-full backdrop-blur-sm transition-all active:scale-90 active:bg-green-400/40 shadow-lg"
+            className={`absolute top-0 left-10 w-20 h-20 rounded-full ${buttonStyle}`}
             onTouchStart={() => handleTouchStart('jump')}
             onTouchEnd={handleTouchEnd}
-            style={{ touchAction: 'manipulation' }}
+            style={{
+              background: 'linear-gradient(135deg, #2a5a2a 0%, #1a3a1a 100%)',
+              border: '4px solid #4aaa4a',
+              boxShadow: 'inset 0 3px 0 #6aff6a, inset 0 -3px 0 #0a2a0a, 0 6px 12px rgba(0,0,0,0.6), 0 0 15px rgba(74,170,74,0.3)',
+              touchAction: 'manipulation'
+            }}
           >
-            <div className="text-white font-bold text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            <div className="text-white font-bold text-xs tracking-wider" style={{
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 0 8px #44ff44'
+            }}>
               JUMP
             </div>
           </button>
           
           {/* Shoot Button (B button position) */}
           <button
-            className="absolute top-8 right-0 w-16 h-16 bg-gradient-to-br from-red-400/25 to-red-600/25 border-3 border-red-300/50 rounded-full backdrop-blur-sm transition-all active:scale-90 active:bg-red-400/40 shadow-lg"
+            className={`absolute top-10 right-0 w-20 h-20 rounded-full ${buttonStyle}`}
             onTouchStart={() => handleTouchStart('shoot')}
             onTouchEnd={handleTouchEnd}
-            style={{ touchAction: 'manipulation' }}
+            style={{
+              background: 'linear-gradient(135deg, #5a2a2a 0%, #3a1a1a 100%)',
+              border: '4px solid #aa4a4a',
+              boxShadow: 'inset 0 3px 0 #ff6a6a, inset 0 -3px 0 #2a0a0a, 0 6px 12px rgba(0,0,0,0.6), 0 0 15px rgba(170,74,74,0.3)',
+              touchAction: 'manipulation'
+            }}
           >
-            <div className="text-white font-bold text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            <div className="text-white font-bold text-xs tracking-wider" style={{
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 0 8px #ff4444'
+            }}>
               FIRE
             </div>
           </button>
         </div>
       </div>
 
-      {/* Weapon Selection - Compact SNES style */}
+      {/* Weapon Selection - Compact 16-bit style */}
       <div className="absolute top-24 right-8 pointer-events-auto">
-        <div className="flex flex-col gap-2 bg-black/20 backdrop-blur-sm rounded-lg p-2 border border-white/20">
-          <div className="text-white text-xs font-bold text-center mb-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">WEAPON</div>
+        <div className="space-y-2" style={{
+          background: 'linear-gradient(135deg, #2a2a5a 0%, #1a1a3a 100%)',
+          border: '3px solid #4a4aaa',
+          boxShadow: 'inset 0 2px 0 #6a6aff, inset 0 -2px 0 #0a0a2a, 0 4px 8px rgba(0,0,0,0.6)',
+          padding: '10px',
+          borderRadius: '8px'
+        }}>
+          <div className="text-cyan-300 text-xs font-bold text-center mb-2 tracking-wider" style={{
+            textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+          }}>WEAPON</div>
+          
           <button
-            className="w-14 h-10 bg-gradient-to-b from-yellow-400/25 to-yellow-600/25 border-2 border-yellow-300/50 rounded text-white text-xs font-bold backdrop-blur-sm transition-all active:scale-95 active:bg-yellow-400/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+            className={`w-16 h-12 rounded ${buttonStyle}`}
             onTouchStart={() => handleTouchStart('weapon1')}
             onTouchEnd={handleTouchEnd}
-            style={{ touchAction: 'manipulation' }}
+            style={{
+              background: 'linear-gradient(180deg, #5a5a2a 0%, #3a3a1a 100%)',
+              border: '2px solid #aaaa4a',
+              boxShadow: 'inset 0 2px 0 #ffff6a, 0 2px 4px rgba(0,0,0,0.5)',
+              touchAction: 'manipulation'
+            }}
           >
-            BASIC
+            <div className="text-white text-xs font-bold tracking-wider" style={{
+              textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+            }}>1</div>
           </button>
+          
           <button
-            className="w-14 h-10 bg-gradient-to-b from-orange-400/25 to-orange-600/25 border-2 border-orange-300/50 rounded text-white text-xs font-bold backdrop-blur-sm transition-all active:scale-95 active:bg-orange-400/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+            className={`w-16 h-12 rounded ${buttonStyle}`}
             onTouchStart={() => handleTouchStart('weapon2')}
             onTouchEnd={handleTouchEnd}
-            style={{ touchAction: 'manipulation' }}
+            style={{
+              background: 'linear-gradient(180deg, #5a3a2a 0%, #3a2a1a 100%)',
+              border: '2px solid #aa6a4a',
+              boxShadow: 'inset 0 2px 0 #ff8a6a, 0 2px 4px rgba(0,0,0,0.5)',
+              touchAction: 'manipulation'
+            }}
           >
-            M-GUN
+            <div className="text-white text-xs font-bold tracking-wider" style={{
+              textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+            }}>2</div>
           </button>
+          
           <button
-            className="w-14 h-10 bg-gradient-to-b from-purple-400/25 to-purple-600/25 border-2 border-purple-300/50 rounded text-white text-xs font-bold backdrop-blur-sm transition-all active:scale-95 active:bg-purple-400/40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+            className={`w-16 h-12 rounded ${buttonStyle}`}
             onTouchStart={() => handleTouchStart('weapon3')}
             onTouchEnd={handleTouchEnd}
-            style={{ touchAction: 'manipulation' }}
+            style={{
+              background: 'linear-gradient(180deg, #5a2a5a 0%, #3a1a3a 100%)',
+              border: '2px solid #aa4aaa',
+              boxShadow: 'inset 0 2px 0 #ff6aff, 0 2px 4px rgba(0,0,0,0.5)',
+              touchAction: 'manipulation'
+            }}
           >
-            SPREAD
+            <div className="text-white text-xs font-bold tracking-wider" style={{
+              textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+            }}>3</div>
           </button>
         </div>
       </div>

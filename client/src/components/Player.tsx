@@ -138,6 +138,41 @@ const Player = ({ playerData }: PlayerProps) => {
           />
         </mesh>
       )}
+      
+      {/* Shield effect when active */}
+      {playerData.hasShield && (
+        <>
+          {/* Shield outer glow */}
+          <mesh position={[0, 0, 0.06]}>
+            <planeGeometry args={[1.6, 1.8]} />
+            <meshBasicMaterial 
+              color="#4488ff"
+              transparent
+              opacity={0.15}
+            />
+          </mesh>
+          
+          {/* Shield hexagon pattern */}
+          <mesh position={[0, 0, 0.07]}>
+            <planeGeometry args={[1.4, 1.6]} />
+            <meshBasicMaterial 
+              color="#88bbff"
+              transparent
+              opacity={0.25}
+            />
+          </mesh>
+          
+          {/* Shield inner core */}
+          <mesh position={[0, 0, 0.08]}>
+            <planeGeometry args={[1.2, 1.4]} />
+            <meshBasicMaterial 
+              color="#aaddff"
+              transparent
+              opacity={0.2}
+            />
+          </mesh>
+        </>
+      )}
     </group>
   );
 };

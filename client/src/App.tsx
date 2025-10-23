@@ -38,7 +38,7 @@ function App() {
       height: '100vh', 
       position: 'relative', 
       overflow: 'hidden',
-      background: '#0a0a0a'
+      background: 'linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a1a 100%)'
     }}>
       {showCanvas && (
         <KeyboardControls map={controls}>
@@ -55,10 +55,10 @@ function App() {
               powerPreference: "default"
             }}
             style={{
-              background: '#1a1a2e'
+              background: '#1a1a3e'
             }}
           >
-            <color attach="background" args={["#1a1a2e"]} />
+            <color attach="background" args={["#1a1a3e"]} />
             
             <Suspense fallback={null}>
               <Game />
