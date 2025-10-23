@@ -74,8 +74,17 @@ interface GameState {
   bullets: Bullet[];
   powerUps: PowerUp[];
   level: Level;
-  gameState: 'menu' | 'playing' | 'gameOver';
+  gameState: 'menu' | 'playing' | 'gameOver' | 'levelComplete' | 'victory';
   score: number;
+  currentLevel: number;
+  enemiesKilled: number;
+  comboCount: number;
+  comboTimer: number;
+  comboMultiplier: number;
+  bossActive: boolean;
+  boss: Enemy | null;
+  explosions: any[];
+  particles: any[];
   enemySpawnTimer: number;
   powerUpSpawnTimer: number;
   
@@ -87,6 +96,10 @@ interface GameState {
   updateEnemies: (delta: number) => void;
   updateBullets: (delta: number) => void;
   updatePowerUps: (delta: number) => void;
+  updateExplosions: (delta: number) => void;
+  updateParticles: (delta: number) => void;
+  updateComboTimer: (delta: number) => void;
+  nextLevel: () => void;
   updatePlayerInput: (input: any) => void;
   shootBullet: (position: Position, direction: Position, weapon: string, owner: string) => void;
   checkCollisions: () => void;
@@ -108,23 +121,71 @@ export const useGameStore = create<GameState>()(
     level: { platforms: [] },
     gameState: 'menu',
     score: 0,
+    currentLevel: 1,
+    enemiesKilled: 0,
+    comboCount: 0,
+    comboTimer: 0,
+    comboMultiplier: 1,
+    bossActive: false,
+    boss: null,
+    explosions: [],
+    particles: [],
     enemySpawnTimer: 0,
     powerUpSpawnTimer: 0,
 
     initializeGame: () => {
-      const level: Level = {
-        platforms: [
-          // Ground platforms
-          { x: 0, y: -3, width: 20, height: 1, type: 'grass' },
-          { x: 25, y: -3, width: 15, height: 1, type: 'asphalt' },
-          { x: 45, y: -3, width: 20, height: 1, type: 'grass' },
-          
-          // Elevated platforms
-          { x: 10, y: -1, width: 4, height: 0.5, type: 'asphalt' },
-          { x: 20, y: 1, width: 6, height: 0.5, type: 'asphalt' },
-          { x: 35, y: 0.5, width: 5, height: 0.5, type: 'asphalt' },
-        ]
-      };
+      const currentLevel = get().currentLevel;
+      let level: Level;
+      
+      // Different level layouts based on currentLevel
+      switch (currentLevel) {
+        case 1:
+          level = {
+            platforms: [
+              { x: 0, y: -3, width: 20, height: 1, type: 'grass' },
+              { x: -8, y: -1, width: 6, height: 0.5, type: 'asphalt' },
+              { x: 8, y: 0, width: 6, height: 0.5, type: 'asphalt' },
+              { x: 0, y: 2, width: 10, height: 0.5, type: 'grass' }
+            ]
+          };
+          break;
+        case 2:
+          level = {
+            platforms: [
+              { x: 0, y: -3, width: 25, height: 1, type: 'asphalt' },
+              { x: -10, y: -1, width: 5, height: 0.5, type: 'asphalt' },
+              { x: 10, y: -1, width: 5, height: 0.5, type: 'asphalt' },
+              { x: -5, y: 1, width: 8, height: 0.5, type: 'asphalt' },
+              { x: 5, y: 1, width: 8, height: 0.5, type: 'asphalt' },
+              { x: 0, y: 3, width: 12, height: 0.5, type: 'grass' }
+            ]
+          };
+          break;
+        case 3:
+          level = {
+            platforms: [
+              { x: 0, y: -3, width: 30, height: 1, type: 'grass' },
+              { x: -12, y: -1.5, width: 4, height: 0.5, type: 'asphalt' },
+              { x: -6, y: -0.5, width: 4, height: 0.5, type: 'asphalt' },
+              { x: 0, y: 0.5, width: 6, height: 0.5, type: 'asphalt' },
+              { x: 6, y: -0.5, width: 4, height: 0.5, type: 'asphalt' },
+              { x: 12, y: -1.5, width: 4, height: 0.5, type: 'asphalt' },
+              { x: 0, y: 2.5, width: 15, height: 0.5, type: 'grass' }
+            ]
+          };
+          break;
+        default:
+          // Boss level
+          level = {
+            platforms: [
+              { x: 0, y: -3, width: 35, height: 1, type: 'asphalt' },
+              { x: -10, y: 0, width: 8, height: 0.5, type: 'asphalt' },
+              { x: 10, y: 0, width: 8, height: 0.5, type: 'asphalt' },
+              { x: 0, y: 2, width: 20, height: 0.5, type: 'asphalt' }
+            ]
+          };
+          break;
+      }
 
       set({ level });
     },
@@ -146,13 +207,24 @@ export const useGameStore = create<GameState>()(
         shieldDuration: 0
       };
 
+      get().initializeGame();
+
       set({
         player,
         enemies: [],
         bullets: [],
         powerUps: [],
+        explosions: [],
+        particles: [],
         gameState: 'playing',
         score: 0,
+        currentLevel: 1,
+        enemiesKilled: 0,
+        comboCount: 0,
+        comboTimer: 0,
+        comboMultiplier: 1,
+        bossActive: false,
+        boss: null,
         enemySpawnTimer: 0,
         powerUpSpawnTimer: 0
       });
@@ -404,6 +476,82 @@ export const useGameStore = create<GameState>()(
 
       set({ bullets: updatedBullets });
     },
+    
+    updateExplosions: (delta: number) => {
+      const { explosions } = get();
+      
+      const updatedExplosions = explosions
+        .map(explosion => ({
+          ...explosion,
+          lifetime: explosion.lifetime - delta,
+          size: explosion.size + delta * 2 // Expand over time
+        }))
+        .filter(explosion => explosion.lifetime > 0);
+      
+      set({ explosions: updatedExplosions });
+    },
+    
+    updateParticles: (delta: number) => {
+      const { particles } = get();
+      
+      const updatedParticles = particles
+        .map(particle => ({
+          ...particle,
+          position: {
+            x: particle.position.x + particle.velocity.x * delta,
+            y: particle.position.y + particle.velocity.y * delta
+          },
+          velocity: {
+            x: particle.velocity.x * 0.95, // Slow down
+            y: particle.velocity.y - 8 * delta // Gravity
+          },
+          lifetime: particle.lifetime - delta
+        }))
+        .filter(particle => particle.lifetime > 0);
+      
+      set({ particles: updatedParticles });
+    },
+    
+    updateComboTimer: (delta: number) => {
+      const { comboTimer } = get();
+      if (comboTimer > 0) {
+        const newTimer = Math.max(0, comboTimer - delta);
+        if (newTimer === 0) {
+          set({ comboTimer: 0, comboCount: 0, comboMultiplier: 1 });
+        } else {
+          set({ comboTimer: newTimer });
+        }
+      }
+    },
+    
+    nextLevel: () => {
+      const { currentLevel, player } = get();
+      const nextLevelNum = currentLevel + 1;
+      
+      // Reset player position
+      if (player) {
+        player.position = { x: 0, y: -1.5 };
+        player.velocity = { x: 0, y: 0 };
+        player.health = Math.min(player.maxHealth, player.health + 1); // Heal 1 HP on level completion
+      }
+      
+      set({
+        currentLevel: nextLevelNum,
+        gameState: 'playing',
+        enemies: [],
+        bullets: [],
+        powerUps: [],
+        explosions: [],
+        particles: [],
+        enemiesKilled: 0,
+        enemySpawnTimer: 0,
+        powerUpSpawnTimer: 0,
+        bossActive: false,
+        boss: null
+      });
+      
+      get().initializeGame();
+    },
 
     updatePlayerInput: (input: any) => {
       const { player } = get();
@@ -532,8 +680,91 @@ export const useGameStore = create<GameState>()(
               
               if (enemy.health <= 0) {
                 updatedEnemies.splice(j, 1);
-                newScore += 100;
+                
+                // Update combo system
+                const state = get();
+                const comboTimer = state.comboTimer;
+                let comboCount = state.comboCount;
+                let comboMultiplier = state.comboMultiplier;
+                
+                if (comboTimer > 0) {
+                  comboCount++;
+                  if (comboCount >= 5) comboMultiplier = 4;
+                  else if (comboCount >= 3) comboMultiplier = 2;
+                  else comboMultiplier = 1;
+                } else {
+                  comboCount = 1;
+                  comboMultiplier = 1;
+                }
+                
+                // Apply combo multiplier to score
+                const baseScore = 100;
+                const comboScore = baseScore * comboMultiplier;
+                newScore += comboScore;
+                
+                // Create explosion effect
+                const explosions = [...state.explosions, {
+                  id: generateId(),
+                  position: { ...enemy.position },
+                  size: 1.5,
+                  lifetime: 0.5,
+                  color: '#ff8800'
+                }];
+                
+                // Create particles
+                const particles = [...state.particles];
+                for (let p = 0; p < 8; p++) {
+                  const angle = (p / 8) * Math.PI * 2;
+                  particles.push({
+                    id: generateId(),
+                    position: { ...enemy.position },
+                    velocity: {
+                      x: Math.cos(angle) * 3,
+                      y: Math.sin(angle) * 3
+                    },
+                    lifetime: 1.0,
+                    color: '#ffaa00'
+                  });
+                }
+                
+                set({ 
+                  comboCount,
+                  comboMultiplier,
+                  comboTimer: 2.0, // Reset combo timer
+                  enemiesKilled: state.enemiesKilled + 1,
+                  explosions,
+                  particles
+                });
+                
                 useAudio.getState().playSuccess();
+                
+                // Check for level completion
+                const enemiesNeededForLevel = 10 + (state.currentLevel - 1) * 5;
+                if (state.enemiesKilled >= enemiesNeededForLevel && !state.bossActive) {
+                  // Spawn boss for levels 3, 6, 9...
+                  if (state.currentLevel % 3 === 0) {
+                    // Spawn boss
+                    const boss: Enemy = {
+                      id: generateId(),
+                      position: { x: 10, y: 0 },
+                      velocity: { x: 0, y: 0 },
+                      health: 20 + state.currentLevel * 5,
+                      maxHealth: 20 + state.currentLevel * 5,
+                      type: 'boss' as any,
+                      facingRight: false,
+                      shootCooldown: 0,
+                      color: '#ff0000',
+                      aiState: 'patrol',
+                      patrolStart: -10,
+                      patrolEnd: 10,
+                      attackPattern: 0
+                    };
+                    set({ boss, bossActive: true });
+                  } else {
+                    // Normal level completion
+                    set({ gameState: 'levelComplete' });
+                  }
+                }
               } else {
                 useAudio.getState().playHit();
               }

@@ -3,7 +3,19 @@ import { useAudio } from "../lib/stores/useAudio";
 import { Card, CardContent } from "./ui/card";
 
 const GameUI = () => {
-  const { player, gameState, score, restartGame } = useGameStore();
+  const { 
+    player, 
+    gameState, 
+    score, 
+    currentLevel,
+    enemiesKilled,
+    comboCount,
+    comboMultiplier,
+    boss,
+    bossActive,
+    nextLevel,
+    restartGame 
+  } = useGameStore();
   const { isMuted, toggleMute } = useAudio();
 
   const getWeaponName = (weapon: string) => {
@@ -133,22 +145,31 @@ const GameUI = () => {
             </div>
           </div>
 
-          {/* Top Center - Score */}
-          <div className="relative" style={{
-            background: 'linear-gradient(135deg, #1a3e1a 0%, #0a1e0a 100%)',
-            border: '4px solid #4aaa4a',
-            boxShadow: 'inset 0 2px 0 #6aff6a, inset 0 -2px 0 #2a5a2a, 0 4px 8px rgba(0,0,0,0.5)'
-          }}>
-            <div className="px-4 py-2">
-              <div className="text-yellow-300 font-bold text-xs mb-1 text-center tracking-wider" style={{
-                textShadow: '1px 1px 0px #8b6914'
-              }}>SCORE</div>
-              <div className="text-white font-bold text-2xl tracking-widest tabular-nums" style={{
-                textShadow: '2px 2px 0px #000000, -1px -1px 0px #66ff66',
-                fontFamily: 'monospace'
-              }}>
-                {score.toString().padStart(7, '0')}
+          {/* Top Center - Score and Level */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative" style={{
+              background: 'linear-gradient(135deg, #1a3e1a 0%, #0a1e0a 100%)',
+              border: '4px solid #4aaa4a',
+              boxShadow: 'inset 0 2px 0 #6aff6a, inset 0 -2px 0 #2a5a2a, 0 4px 8px rgba(0,0,0,0.5)'
+            }}>
+              <div className="px-4 py-2">
+                <div className="text-yellow-300 font-bold text-xs mb-1 text-center tracking-wider" style={{
+                  textShadow: '1px 1px 0px #8b6914'
+                }}>SCORE</div>
+                <div className="text-white font-bold text-2xl tracking-widest tabular-nums" style={{
+                  textShadow: '2px 2px 0px #000000, -1px -1px 0px #66ff66',
+                  fontFamily: 'monospace'
+                }}>
+                  {score.toString().padStart(7, '0')}
+                </div>
               </div>
+            </div>
+            
+            {/* Level indicator */}
+            <div className="text-cyan-300 font-bold text-sm tracking-wider" style={{
+              textShadow: '2px 2px 0px #000000, 0 0 10px #00ffff'
+            }}>
+              LEVEL {currentLevel}
             </div>
           </div>
           
@@ -166,6 +187,59 @@ const GameUI = () => {
           >
             <div className="text-2xl">{isMuted ? '🔇' : '🔊'}</div>
           </button>
+        </div>
+      )}
+      
+      {/* Combo Display */}
+      {gameState === 'playing' && comboCount > 0 && (
+        <div className="absolute top-32 left-1/2 -translate-x-1/2 animate-pulse">
+          <div className="text-center">
+            <div className="text-6xl font-bold text-yellow-400" style={{
+              textShadow: '3px 3px 0px #ff6600, -2px -2px 0px #ffff00, 0 0 20px #ff8800',
+              fontFamily: 'monospace'
+            }}>
+              x{comboMultiplier}
+            </div>
+            <div className="text-2xl font-bold text-white mt-2" style={{
+              textShadow: '2px 2px 0px #000000, 0 0 10px #ffaa00'
+            }}>
+              COMBO {comboCount}!
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Boss Health Bar */}
+      {gameState === 'playing' && bossActive && boss && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-96">
+          <div className="text-center mb-2">
+            <div className="text-red-500 font-bold text-2xl tracking-wider animate-pulse" style={{
+              textShadow: '2px 2px 0px #000000, 0 0 20px #ff0000'
+            }}>
+              BOSS BATTLE
+            </div>
+          </div>
+          <div className="relative h-8" style={{
+            background: 'linear-gradient(135deg, #2a0a0a 0%, #1a0000 100%)',
+            border: '3px solid #aa2a2a',
+            boxShadow: 'inset 0 2px 0 #ff4444, inset 0 -2px 0 #550000, 0 4px 8px rgba(0,0,0,0.8)'
+          }}>
+            <div 
+              className="absolute inset-0 transition-all duration-300"
+              style={{
+                width: `${(boss.health / boss.maxHealth) * 100}%`,
+                background: 'linear-gradient(180deg, #ff3333 0%, #cc0000 100%)',
+                boxShadow: '0 0 10px #ff0000'
+              }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-white font-bold text-sm" style={{
+                textShadow: '1px 1px 0px #000000'
+              }}>
+                {boss.health} / {boss.maxHealth}
+              </span>
+            </div>
+          </div>
         </div>
       )}
 
@@ -240,6 +314,56 @@ const GameUI = () => {
                   }}
                 >
                   CONTINUE
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Level Complete Screen */}
+      {gameState === 'levelComplete' && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-auto" style={{
+          background: 'radial-gradient(circle, rgba(0,40,0,0.9) 0%, rgba(0,0,0,0.95) 100%)'
+        }}>
+          <div className="relative max-w-md w-full mx-4">
+            <div className="relative" style={{
+              background: 'linear-gradient(135deg, #0a3e0a 0%, #001a00 100%)',
+              border: '6px solid #2aaa2a',
+              boxShadow: 'inset 0 3px 0 #44ff44, inset 0 -3px 0 #005500, 0 8px 16px rgba(0,0,0,0.8)'
+            }}>
+              <div className="p-8 text-center space-y-6">
+                <h1 className="text-5xl font-bold tracking-wider mb-2" style={{
+                  color: '#44ff44',
+                  textShadow: '4px 4px 0px #008b00, -2px -2px 0px #66ff66, 0 0 20px #00ff00',
+                  fontFamily: 'monospace'
+                }}>
+                  LEVEL {currentLevel}
+                </h1>
+                <h2 className="text-3xl font-bold" style={{
+                  color: '#ffff44',
+                  textShadow: '2px 2px 0px #888800'
+                }}>
+                  COMPLETE!
+                </h2>
+                
+                <div className="py-4">
+                  <div className="text-white text-lg mb-2">Enemies Defeated: {enemiesKilled}</div>
+                  <div className="text-yellow-300 text-xl font-bold">Score: {score}</div>
+                </div>
+                
+                <button
+                  onClick={nextLevel}
+                  className="px-8 py-4 font-bold text-xl tracking-widest transition-all hover:scale-105 active:scale-95"
+                  style={{
+                    background: 'linear-gradient(180deg, #44ff44 0%, #00cc00 100%)',
+                    border: '4px solid #66ff66',
+                    boxShadow: 'inset 0 2px 0 #88ff88, 0 4px 8px rgba(0,0,0,0.5)',
+                    color: '#003300',
+                    textShadow: '1px 1px 0px #aaffaa'
+                  }}
+                >
+                  NEXT LEVEL
                 </button>
               </div>
             </div>

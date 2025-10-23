@@ -1,5 +1,5 @@
 import { useFrame } from "@react-three/fiber";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import { OrthographicCamera } from "@react-three/drei";
 import * as THREE from "three";
 import Player from "./Player";
@@ -7,6 +7,8 @@ import Level from "./Level";
 import Enemy from "./Enemy";
 import Bullet from "./Bullet";
 import PowerUp from "./PowerUp";
+import Explosion from "./Explosion";
+import Particle from "./Particle";
 import { useGameStore } from "../lib/stores/useGameStore";
 
 const Game = () => {
@@ -16,12 +18,19 @@ const Game = () => {
     enemies,
     bullets,
     powerUps,
+    explosions,
+    particles,
+    boss,
+    bossActive,
     level,
     gameState,
     updatePlayer,
     updateEnemies,
     updateBullets,
     updatePowerUps,
+    updateExplosions,
+    updateParticles,
+    updateComboTimer,
     checkCollisions,
     spawnEnemies,
     spawnPowerUp,
@@ -41,8 +50,15 @@ const Game = () => {
       updateEnemies(delta);
       updateBullets(delta);
       updatePowerUps(delta);
+      updateExplosions(delta);
+      updateParticles(delta);
+      updateComboTimer(delta);
       checkCollisions();
-      spawnEnemies();
+      
+      // Only spawn enemies if not fighting boss
+      if (!bossActive) {
+        spawnEnemies();
+      }
       spawnPowerUp();
 
       // Update camera to follow player
@@ -83,6 +99,11 @@ const Game = () => {
       {enemies.map(enemy => (
         <Enemy key={enemy.id} enemyData={enemy} />
       ))}
+      
+      {/* Boss */}
+      {boss && bossActive && (
+        <Enemy key={boss.id} enemyData={boss} />
+      )}
 
       {/* Bullets */}
       {bullets.map(bullet => (
@@ -92,6 +113,16 @@ const Game = () => {
       {/* Power-ups */}
       {powerUps.map(powerUp => (
         <PowerUp key={powerUp.id} powerUpData={powerUp} />
+      ))}
+      
+      {/* Explosions */}
+      {explosions.map(explosion => (
+        <Explosion key={explosion.id} explosionData={explosion} />
+      ))}
+      
+      {/* Particles */}
+      {particles.map(particle => (
+        <Particle key={particle.id} particleData={particle} />
       ))}
     </>
   );
