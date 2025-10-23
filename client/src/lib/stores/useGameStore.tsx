@@ -30,7 +30,8 @@ interface Enemy {
   position: Position;
   velocity: Position;
   health: number;
-  type: 'soldier' | 'flying' | 'turret' | 'runner';
+  maxHealth: number;
+  type: 'soldier' | 'flying' | 'turret' | 'runner' | 'boss';
   facingRight: boolean;
   aiState: string;
   shootCooldown: number;
@@ -38,6 +39,8 @@ interface Enemy {
   patrolEnd: number;
   hoverOffset?: number;
   hoverSpeed?: number;
+  grounded?: boolean;
+  jumpCooldown?: number;
 }
 
 interface Bullet {
@@ -421,6 +424,77 @@ export const useGameStore = create<GameState>()(
               }
             }
             break;
+            
+          case 'boss':
+            // Boss AI - more aggressive and complex patterns
+            if (!player) break;
+            
+            const distToPlayer = Math.abs(player.position.x - enemy.position.x);
+            enemy.facingRight = player.position.x > enemy.position.x;
+            
+            // Boss phases based on health
+            const healthPercent = enemy.health / enemy.maxHealth;
+            
+            if (healthPercent > 0.5) {
+              // Phase 1: Aggressive pursuit with rapid fire
+              if (distToPlayer > 4) {
+                enemy.velocity.x = enemy.facingRight ? 3 : -3;
+              } else {
+                enemy.velocity.x = 0;
+              }
+              
+              // Rapid fire
+              if (enemy.shootCooldown <= 0) {
+                // Triple shot pattern
+                for (let i = -1; i <= 1; i++) {
+                  const direction = {
+                    x: (enemy.facingRight ? 1 : -1) * 0.8,
+                    y: i * 0.3
+                  };
+                  
+                  get().shootBullet(
+                    { x: enemy.position.x, y: enemy.position.y + i * 0.2 },
+                    direction,
+                    'spread',
+                    enemy.id
+                  );
+                }
+                
+                enemy.shootCooldown = 0.8;
+              }
+            } else {
+              // Phase 2: Jump attacks and spread shots
+              if (enemy.jumpCooldown === undefined) enemy.jumpCooldown = 0;
+              enemy.jumpCooldown -= delta;
+              
+              // Jump toward player
+              if (enemy.jumpCooldown <= 0 && enemy.grounded) {
+                enemy.velocity.y = 6;
+                enemy.velocity.x = enemy.facingRight ? 4 : -4;
+                enemy.jumpCooldown = 2;
+              }
+              
+              // Circular spread shot
+              if (enemy.shootCooldown <= 0) {
+                for (let i = 0; i < 8; i++) {
+                  const angle = (i / 8) * Math.PI * 2;
+                  const direction = {
+                    x: Math.cos(angle) * 0.7,
+                    y: Math.sin(angle) * 0.7
+                  };
+                  
+                  get().shootBullet(
+                    { x: enemy.position.x, y: enemy.position.y },
+                    direction,
+                    'spread',
+                    enemy.id
+                  );
+                }
+                
+                enemy.shootCooldown = 1.5;
+              }
+            }
+            break;
         }
 
         // Apply gravity (not for flying or turret enemies)
@@ -750,14 +824,14 @@ export const useGameStore = create<GameState>()(
                       velocity: { x: 0, y: 0 },
                       health: 20 + state.currentLevel * 5,
                       maxHealth: 20 + state.currentLevel * 5,
-                      type: 'boss' as any,
+                      type: 'boss',
                       facingRight: false,
                       shootCooldown: 0,
-                      color: '#ff0000',
                       aiState: 'patrol',
                       patrolStart: -10,
                       patrolEnd: 10,
-                      attackPattern: 0
+                      grounded: false,
+                      jumpCooldown: 0
                     };
                     set({ boss, bossActive: true });
                   } else {
@@ -827,6 +901,7 @@ export const useGameStore = create<GameState>()(
               position: { x: spawnX, y: 2 },
               velocity: { x: 0, y: 0 },
               health: 1,
+              maxHealth: 1,
               type: 'flying',
               facingRight: true,
               aiState: 'hover',
@@ -844,6 +919,7 @@ export const useGameStore = create<GameState>()(
               position: { x: spawnX, y: -1.3 },
               velocity: { x: 0, y: 0 },
               health: 3,
+              maxHealth: 3,
               type: 'turret',
               facingRight: true,
               aiState: 'shoot',
@@ -859,6 +935,7 @@ export const useGameStore = create<GameState>()(
               position: { x: spawnX, y: -1.5 },
               velocity: { x: 0, y: 0 },
               health: 1,
+              maxHealth: 1,
               type: 'runner',
               facingRight: true,
               aiState: 'patrol',
@@ -874,6 +951,7 @@ export const useGameStore = create<GameState>()(
               position: { x: spawnX, y: -1.5 },
               velocity: { x: 0, y: 0 },
               health: 2,
+              maxHealth: 2,
               type: 'soldier',
               facingRight: true,
               aiState: 'patrol',
