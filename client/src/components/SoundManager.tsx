@@ -7,8 +7,8 @@ const SoundManager = () => {
 
   useEffect(() => {
     // Use the 80s retro music generator instead of MP3
-    retroMusic.setVolume(0.4);
-    retroMusic.setTempo(128); // Classic 80s tempo
+    retroMusic.setVolume(0.3); // Lower volume to be less intrusive
+    retroMusic.setTempo(150); // Faster, more upbeat tempo
     
     // Keep the sound effects
     const hitSound = new Audio('/sounds/hit.mp3');

@@ -3,47 +3,67 @@ export class RetroMusicGenerator {
   private audioContext: AudioContext;
   private masterGain: GainNode;
   private isPlaying: boolean = false;
-  private tempo: number = 128; // BPM
+  private tempo: number = 150; // Faster BPM for more energy!
   private nextNoteTime: number = 0;
   private currentBeat: number = 0;
   private scheduleAheadTime: number = 0.1;
   private intervalId: number | null = null;
+  private currentSection: number = 0;
 
-  // Synth patterns for that classic 80s sound
+  // More upbeat and catchy patterns
   private bassPattern = [
-    { note: 65.41, duration: 0.25 }, // C2
-    { note: 65.41, duration: 0.25 },
-    { note: 82.41, duration: 0.25 }, // E2
-    { note: 65.41, duration: 0.25 },
-    { note: 87.31, duration: 0.25 }, // F2
-    { note: 87.31, duration: 0.25 },
-    { note: 65.41, duration: 0.25 },
-    { note: 82.41, duration: 0.25 },
+    { note: 130.81, duration: 0.2 }, // C3
+    { note: 130.81, duration: 0.1 },
+    { note: 164.81, duration: 0.2 }, // E3
+    { note: 196.00, duration: 0.2 }, // G3
+    { note: 130.81, duration: 0.2 }, // C3
+    { note: 164.81, duration: 0.1 }, // E3
+    { note: 196.00, duration: 0.2 }, // G3
+    { note: 130.81, duration: 0.2 }, // C3
   ];
 
+  // Catchy main melody inspired by classic arcade games
   private leadMelody = [
-    { note: 523.25, duration: 0.5 }, // C5
-    { note: 0, duration: 0.25 }, // rest
-    { note: 523.25, duration: 0.125 },
-    { note: 587.33, duration: 0.125 }, // D5
-    { note: 659.25, duration: 0.5 }, // E5
-    { note: 523.25, duration: 0.25 },
+    // Main hook - very memorable and upbeat
+    { note: 659.25, duration: 0.25 }, // E5
+    { note: 783.99, duration: 0.25 }, // G5
+    { note: 659.25, duration: 0.15 }, // E5
+    { note: 523.25, duration: 0.15 }, // C5
+    { note: 587.33, duration: 0.25 }, // D5
+    { note: 0, duration: 0.1 }, // rest
+    { note: 493.88, duration: 0.15 }, // B4
+    { note: 523.25, duration: 0.25 }, // C5
+    { note: 659.25, duration: 0.35 }, // E5
+    { note: 0, duration: 0.15 }, // rest
+    { note: 587.33, duration: 0.25 }, // D5
+    { note: 523.25, duration: 0.25 }, // C5
+    { note: 493.88, duration: 0.25 }, // B4
+    { note: 440.00, duration: 0.35 }, // A4
+  ];
+
+  // Secondary melody for variation
+  private altMelody = [
+    { note: 783.99, duration: 0.2 }, // G5
+    { note: 880.00, duration: 0.2 }, // A5
+    { note: 783.99, duration: 0.15 }, // G5
+    { note: 659.25, duration: 0.25 }, // E5
+    { note: 587.33, duration: 0.2 }, // D5
+    { note: 659.25, duration: 0.3 }, // E5
+    { note: 523.25, duration: 0.25 }, // C5
     { note: 440.00, duration: 0.25 }, // A4
-    { note: 493.88, duration: 0.5 }, // B4
-    { note: 523.25, duration: 0.5 }, // C5
   ];
 
   private arpPattern = [
-    { note: 261.63, duration: 0.0625 }, // C4
-    { note: 329.63, duration: 0.0625 }, // E4
-    { note: 392.00, duration: 0.0625 }, // G4
-    { note: 523.25, duration: 0.0625 }, // C5
+    { note: 523.25, duration: 0.05 }, // C5 - faster arps
+    { note: 659.25, duration: 0.05 }, // E5
+    { note: 783.99, duration: 0.05 }, // G5
+    { note: 659.25, duration: 0.05 }, // E5
   ];
 
   constructor() {
     this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     this.masterGain = this.audioContext.createGain();
-    this.masterGain.gain.value = 0.4;
+    this.masterGain.gain.value = 0.25; // Lower volume to be less annoying
     this.masterGain.connect(this.audioContext.destination);
   }
 
@@ -65,137 +85,142 @@ export class RetroMusicGenerator {
   }
 
   private playBass(time: number) {
-    const noteIndex = this.currentBeat % this.bassPattern.length;
+    const noteIndex = (this.currentBeat * 2) % this.bassPattern.length;
     const note = this.bassPattern[noteIndex];
     
     if (note.note === 0) return; // Rest
+    if (this.currentBeat % 2 !== 0) return; // Only play on main beats
 
-    // Classic 80s bass sound - sawtooth with filter
-    const oscillator = this.createOscillator(note.note, 'sawtooth');
+    // Smoother bass sound - less harsh
+    const oscillator = this.createOscillator(note.note, 'sine');
+    const oscillator2 = this.createOscillator(note.note * 2, 'triangle');
     const gain = this.audioContext.createGain();
+    const gain2 = this.audioContext.createGain();
     const filter = this.audioContext.createBiquadFilter();
     
     filter.type = 'lowpass';
-    filter.frequency.value = 800;
-    filter.Q.value = 5;
+    filter.frequency.value = 400; // Less bright
+    filter.Q.value = 2;
     
-    // Add filter envelope for that classic synth bass sweep
-    filter.frequency.setValueAtTime(100, time);
-    filter.frequency.exponentialRampToValueAtTime(800, time + 0.01);
-    filter.frequency.exponentialRampToValueAtTime(200, time + note.duration);
+    oscillator.connect(gain);
+    oscillator2.connect(gain2);
+    gain.connect(filter);
+    gain2.connect(filter);
+    filter.connect(this.masterGain);
     
-    oscillator.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
-    
-    gain.gain.value = 0.6;
-    this.createEnvelope(gain.gain, 0.01, 0.05, 0.4, 0.1, time, note.duration);
+    gain.gain.value = 0.4;
+    gain2.gain.value = 0.1;
+    this.createEnvelope(gain.gain, 0.005, 0.02, 0.3, 0.05, time, note.duration);
     
     oscillator.start(time);
+    oscillator2.start(time);
     oscillator.stop(time + note.duration);
+    oscillator2.stop(time + note.duration);
   }
 
   private playLead(time: number) {
-    const noteIndex = Math.floor(this.currentBeat / 2) % this.leadMelody.length;
-    const note = this.leadMelody[noteIndex];
+    // Switch between main and alt melody for variety
+    const useAltMelody = Math.floor(this.currentBeat / 64) % 2 === 1;
+    const melody = useAltMelody ? this.altMelody : this.leadMelody;
+    const noteIndex = Math.floor(this.currentBeat / 2) % melody.length;
+    const note = melody[noteIndex];
     
     if (note.note === 0) return; // Rest
     if (this.currentBeat % 2 !== 0) return; // Play every other beat
 
-    // 80s lead synth - square wave with vibrato
-    const oscillator = this.createOscillator(note.note, 'square');
+    // Softer lead sound with pulse wave
+    const oscillator = this.createOscillator(note.note, 'triangle');
+    const oscillator2 = this.createOscillator(note.note * 0.5, 'sine'); // Sub octave
     const gain = this.audioContext.createGain();
-    const vibrato = this.audioContext.createOscillator();
-    const vibratoGain = this.audioContext.createGain();
+    const gain2 = this.audioContext.createGain();
+    const filter = this.audioContext.createBiquadFilter();
     
-    // Add vibrato for that classic 80s lead sound
-    vibrato.frequency.value = 5;
-    vibratoGain.gain.value = 3;
-    vibrato.connect(vibratoGain);
-    vibratoGain.connect(oscillator.frequency);
+    filter.type = 'lowpass';
+    filter.frequency.value = 2000;
+    filter.Q.value = 1;
     
-    oscillator.connect(gain);
+    oscillator.connect(filter);
+    oscillator2.connect(gain2);
+    filter.connect(gain);
     gain.connect(this.masterGain);
+    gain2.connect(this.masterGain);
     
-    gain.gain.value = 0.3;
-    this.createEnvelope(gain.gain, 0.02, 0.1, 0.5, 0.2, time, note.duration);
+    gain.gain.value = 0.2; // Quieter lead
+    gain2.gain.value = 0.05; // Subtle sub bass
+    this.createEnvelope(gain.gain, 0.01, 0.05, 0.3, 0.1, time, note.duration);
     
     oscillator.start(time);
-    vibrato.start(time);
+    oscillator2.start(time);
     oscillator.stop(time + note.duration);
-    vibrato.stop(time + note.duration);
+    oscillator2.stop(time + note.duration);
   }
 
   private playArpeggio(time: number) {
+    // Only play arps sometimes for less clutter
+    if (this.currentBeat % 4 !== 0) return;
+    
     const noteIndex = this.currentBeat % this.arpPattern.length;
     const note = this.arpPattern[noteIndex];
     
-    // Fast arpeggios - classic 80s sound
-    const oscillator = this.createOscillator(note.note * 2, 'triangle');
+    // Softer, less annoying arpeggios
+    const oscillator = this.createOscillator(note.note, 'sine');
     const gain = this.audioContext.createGain();
-    const delay = this.audioContext.createDelay();
-    const feedback = this.audioContext.createGain();
-    
-    // Add delay for spacey 80s effect
-    delay.delayTime.value = 0.15;
-    feedback.gain.value = 0.3;
     
     oscillator.connect(gain);
-    gain.connect(delay);
-    delay.connect(feedback);
-    feedback.connect(delay);
-    delay.connect(this.masterGain);
     gain.connect(this.masterGain);
     
-    gain.gain.value = 0.15;
-    this.createEnvelope(gain.gain, 0.001, 0.01, 0.1, 0.05, time, note.duration);
+    gain.gain.value = 0.08; // Much quieter
+    this.createEnvelope(gain.gain, 0.001, 0.01, 0.05, 0.02, time, note.duration);
     
     oscillator.start(time);
     oscillator.stop(time + note.duration);
   }
 
   private playDrums(time: number) {
-    const beat = this.currentBeat % 8;
+    const beat = this.currentBeat % 16;
     
-    // Kick drum on 1 and 5
-    if (beat === 0 || beat === 4) {
+    // More varied drum pattern for upbeat feel
+    // Kick drum pattern
+    if (beat === 0 || beat === 4 || beat === 8 || beat === 11 || beat === 12) {
       this.playKick(time);
     }
     
-    // Snare on 2 and 6
-    if (beat === 2 || beat === 6) {
+    // Snare on 4 and 12 for backbeat
+    if (beat === 4 || beat === 12) {
       this.playSnare(time);
     }
     
-    // Hi-hat on every beat
-    this.playHiHat(time, beat % 2 === 0);
+    // Hi-hat pattern - more lively
+    if (beat % 2 === 0 || beat === 3 || beat === 7 || beat === 11 || beat === 15) {
+      this.playHiHat(time, beat % 4 === 0);
+    }
   }
 
   private playKick(time: number) {
-    // Synthesized kick drum
-    const oscillator = this.createOscillator(60, 'sine');
+    // Punchier kick drum
+    const oscillator = this.createOscillator(50, 'sine');
     const gain = this.audioContext.createGain();
     
-    oscillator.frequency.setValueAtTime(150, time);
-    oscillator.frequency.exponentialRampToValueAtTime(60, time + 0.01);
+    oscillator.frequency.setValueAtTime(120, time);
+    oscillator.frequency.exponentialRampToValueAtTime(50, time + 0.02);
     
     oscillator.connect(gain);
     gain.connect(this.masterGain);
     
-    gain.gain.setValueAtTime(1, time);
-    gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+    gain.gain.setValueAtTime(0.6, time); // Softer kick
+    gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
     
     oscillator.start(time);
-    oscillator.stop(time + 0.2);
+    oscillator.stop(time + 0.15);
   }
 
   private playSnare(time: number) {
-    // Synthesized snare with noise
+    // Lighter, crisper snare
     const noise = this.audioContext.createBufferSource();
-    const noiseBuffer = this.audioContext.createBuffer(1, 4096, this.audioContext.sampleRate);
+    const noiseBuffer = this.audioContext.createBuffer(1, 2048, this.audioContext.sampleRate);
     const output = noiseBuffer.getChannelData(0);
     
-    for (let i = 0; i < 4096; i++) {
+    for (let i = 0; i < 2048; i++) {
       output[i] = Math.random() * 2 - 1;
     }
     
@@ -205,38 +230,38 @@ export class RetroMusicGenerator {
     const filter = this.audioContext.createBiquadFilter();
     
     filter.type = 'highpass';
-    filter.frequency.value = 3000;
+    filter.frequency.value = 2000; // Lower frequency for softer sound
     
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(this.masterGain);
     
-    gain.gain.setValueAtTime(0.5, time);
-    gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+    gain.gain.setValueAtTime(0.25, time); // Much softer
+    gain.gain.exponentialRampToValueAtTime(0.01, time + 0.08);
     
     noise.start(time);
     
-    // Add tonal component
-    const oscillator = this.createOscillator(200, 'triangle');
+    // Subtle tonal component
+    const oscillator = this.createOscillator(250, 'sine');
     const oscGain = this.audioContext.createGain();
     
     oscillator.connect(oscGain);
     oscGain.connect(this.masterGain);
     
-    oscGain.gain.setValueAtTime(0.3, time);
-    oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+    oscGain.gain.setValueAtTime(0.15, time);
+    oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.03);
     
     oscillator.start(time);
-    oscillator.stop(time + 0.05);
+    oscillator.stop(time + 0.03);
   }
 
   private playHiHat(time: number, isOpen: boolean) {
-    // Synthesized hi-hat
+    // Much softer hi-hat
     const noise = this.audioContext.createBufferSource();
-    const noiseBuffer = this.audioContext.createBuffer(1, 4096, this.audioContext.sampleRate);
+    const noiseBuffer = this.audioContext.createBuffer(1, 1024, this.audioContext.sampleRate);
     const output = noiseBuffer.getChannelData(0);
     
-    for (let i = 0; i < 4096; i++) {
+    for (let i = 0; i < 1024; i++) {
       output[i] = Math.random() * 2 - 1;
     }
     
@@ -246,14 +271,14 @@ export class RetroMusicGenerator {
     const filter = this.audioContext.createBiquadFilter();
     
     filter.type = 'highpass';
-    filter.frequency.value = isOpen ? 5000 : 8000;
+    filter.frequency.value = isOpen ? 4000 : 6000; // Lower frequencies
     
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(this.masterGain);
     
-    gain.gain.setValueAtTime(isOpen ? 0.15 : 0.1, time);
-    gain.gain.exponentialRampToValueAtTime(0.01, time + (isOpen ? 0.1 : 0.05));
+    gain.gain.setValueAtTime(isOpen ? 0.06 : 0.04, time); // Much quieter
+    gain.gain.exponentialRampToValueAtTime(0.01, time + (isOpen ? 0.08 : 0.03));
     
     noise.start(time);
   }
