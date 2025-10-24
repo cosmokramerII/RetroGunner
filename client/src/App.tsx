@@ -66,7 +66,7 @@ function App() {
           </Canvas>
           
           <GameUI />
-          {isMobile && <TouchControls />}
+          <TouchControls />
           <SoundManager />
         </KeyboardControls>
       )}

@@ -211,6 +211,14 @@ export const useGameStore = create<GameState>()(
       };
 
       get().initializeGame();
+      
+      // Start background music when game starts
+      const audioStore = useAudio.getState();
+      if (audioStore.backgroundMusic && !audioStore.isMuted) {
+        audioStore.backgroundMusic.play().catch(e => {
+          console.log("Background music autoplay prevented:", e);
+        });
+      }
 
       set({
         player,
