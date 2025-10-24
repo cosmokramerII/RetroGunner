@@ -5,22 +5,25 @@ import { useGameStore } from "../lib/stores/useGameStore";
 
 const Player = () => {
   const meshRef = useRef<THREE.Group>(null);
-  const { playerData, isGameOver, updatePlayerPosition } = useGameStore();
+  const { player } = useGameStore();
   
   // Animation state
   const animFrame = useRef(0);
   const animTimer = useRef(0);
   
+  // Safety check - don't render if player doesn't exist
+  if (!player) return null;
+  
   useFrame((state, delta) => {
-    if (meshRef.current) {
+    if (meshRef.current && player) {
       meshRef.current.position.set(
-        playerData.position.x,
-        playerData.position.y,
+        player.position.x,
+        player.position.y,
         0
       );
       
       // Run animation
-      if (Math.abs(playerData.velocity.x) > 0.1) {
+      if (Math.abs(player.velocity.x) > 0.1) {
         animTimer.current += delta;
         if (animTimer.current > 0.08) {
           animTimer.current = 0;
@@ -32,14 +35,14 @@ const Player = () => {
     }
   });
 
-  const isRunning = Math.abs(playerData.velocity.x) > 0.1;
+  const isRunning = Math.abs(player.velocity.x) > 0.1;
   const legOffset = isRunning ? Math.sin(animFrame.current * 0.8) * 0.1 : 0;
   const armSwing = isRunning ? Math.sin(animFrame.current * 0.8) * 0.05 : 0;
 
   return (
     <group ref={meshRef}>
       {/* Modern detailed sprite */}
-      <group scale={[playerData.facingRight ? 1.2 : -1.2, 1.2, 1]}>
+      <group scale={[player.facingRight ? 1.2 : -1.2, 1.2, 1]}>
         
         {/* Shadow */}
         <mesh position={[0, -0.55, -0.01]}>
@@ -87,7 +90,7 @@ const Player = () => {
           
           {/* Arms */}
           {/* Gun arm */}
-          <group rotation={[0, 0, playerData.isShooting ? -0.05 : 0]}>
+          <group rotation={[0, 0, player.shootCooldown > 0 ? -0.05 : 0]}>
             <mesh position={[0.22, 0.1 + armSwing * 0.5, 0]}>
               <planeGeometry args={[0.4, 0.12]} />
               <meshBasicMaterial color="#d4a373" />
@@ -114,7 +117,7 @@ const Player = () => {
               </mesh>
               
               {/* Muzzle flash */}
-              {playerData.isShooting && (
+              {player.shootCooldown > 0.1 && (
                 <>
                   <mesh position={[0.35, 0, 0.02]}>
                     <planeGeometry args={[0.25, 0.25]} />
@@ -165,7 +168,7 @@ const Player = () => {
       </group>
       
       {/* Power-up indicator */}
-      {playerData.currentWeapon !== 'basic' && (
+      {player.currentWeapon !== 'basic' && (
         <group position={[0, 0.9, 0.1]}>
           {/* Weapon icon background */}
           <mesh position={[0, 0, 0]}>
@@ -178,8 +181,8 @@ const Player = () => {
             <planeGeometry args={[0.35, 0.1]} />
             <meshBasicMaterial 
               color={
-                playerData.currentWeapon === 'machine_gun' ? '#ffff00' :
-                playerData.currentWeapon === 'spread_gun' ? '#ff4400' :
+                player.currentWeapon === 'machine_gun' ? '#ffff00' :
+                player.currentWeapon === 'spread_gun' ? '#ff4400' :
                 '#ff00ff'
               }
             />
@@ -188,7 +191,7 @@ const Player = () => {
       )}
       
       {/* Shield effect */}
-      {playerData.hasShield && (
+      {player.hasShield && (
         <>
           {/* Energy shield bubble */}
           <mesh position={[0, 0, 0.05]}>

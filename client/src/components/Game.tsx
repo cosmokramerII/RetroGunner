@@ -93,7 +93,7 @@ const Game = () => {
       <Level levelData={level} />
 
       {/* Player */}
-      {player && <Player playerData={player} />}
+      {player && <Player />}
 
       {/* Enemies */}
       {enemies.map(enemy => (
