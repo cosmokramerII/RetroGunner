@@ -34,6 +34,15 @@ export const useAudio = create<AudioState>((set, get) => ({
     // Just update the muted state
     set({ isMuted: newMutedState });
     
+    // Toggle the retro music
+    import('../audio/retro-music').then(({ retroMusic }) => {
+      if (newMutedState) {
+        retroMusic.stop();
+      } else {
+        retroMusic.start();
+      }
+    });
+    
     // Log the change
     console.log(`Sound ${newMutedState ? 'muted' : 'unmuted'}`);
   },

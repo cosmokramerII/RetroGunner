@@ -212,13 +212,13 @@ export const useGameStore = create<GameState>()(
 
       get().initializeGame();
       
-      // Start background music when game starts
-      const audioStore = useAudio.getState();
-      if (audioStore.backgroundMusic && !audioStore.isMuted) {
-        audioStore.backgroundMusic.play().catch(e => {
-          console.log("Background music autoplay prevented:", e);
-        });
-      }
+      // Start 80s retro music when game starts
+      import('../audio/retro-music').then(({ retroMusic }) => {
+        const audioStore = useAudio.getState();
+        if (!audioStore.isMuted) {
+          retroMusic.start();
+        }
+      });
 
       set({
         player,

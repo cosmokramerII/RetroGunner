@@ -1,16 +1,16 @@
 import { useEffect } from "react";
 import { useAudio } from "../lib/stores/useAudio";
+import { retroMusic } from "../lib/audio/retro-music";
 
 const SoundManager = () => {
-  const { setBackgroundMusic, setHitSound, setSuccessSound } = useAudio();
+  const { setHitSound, setSuccessSound } = useAudio();
 
   useEffect(() => {
-    // Load and setup audio files
-    const backgroundMusic = new Audio('/sounds/background.mp3');
-    backgroundMusic.loop = true;
-    backgroundMusic.volume = 0.3;
-    setBackgroundMusic(backgroundMusic);
-
+    // Use the 80s retro music generator instead of MP3
+    retroMusic.setVolume(0.4);
+    retroMusic.setTempo(128); // Classic 80s tempo
+    
+    // Keep the sound effects
     const hitSound = new Audio('/sounds/hit.mp3');
     hitSound.volume = 0.5;
     setHitSound(hitSound);
@@ -21,11 +21,11 @@ const SoundManager = () => {
 
     // Cleanup
     return () => {
-      backgroundMusic.pause();
+      retroMusic.stop();
       hitSound.pause();
       successSound.pause();
     };
-  }, [setBackgroundMusic, setHitSound, setSuccessSound]);
+  }, [setHitSound, setSuccessSound]);
 
   return null; // This component doesn't render anything
 };
